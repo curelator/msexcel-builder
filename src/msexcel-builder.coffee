@@ -140,7 +140,12 @@ class Sheet
     @styles = {}
 
   set: (col, row, str) ->
-    @data[row][col].v = @book.ss.str2id(''+str) if str? and str isnt ''
+    if not isNaN(parseFloat(str)) and isFinite(str)
+      @data[row][col].t = "n"
+      @data[row][col].v = str
+    else
+      @data[row][col].t = "s"
+      @data[row][col].v = @book.ss.str2id("" + str)
 
   merge: (from_cell, to_cell) ->
     @merges.push({from:from_cell, to:to_cell})
@@ -199,12 +204,15 @@ class Sheet
       for j in [1..@cols]
         ix = @data[i][j]
         sid = @style_id(j, i)
-        if (ix.v isnt 0) or (sid isnt 1)
+        if (ix.t isnt `undefined`) or (sid isnt 1)
           c = r.ele('c',{r:''+tool.i2a(j)+i})
           c.att('s',''+(sid-1)) if sid isnt 1
-          if ix.v isnt 0
+          if ix.t is 's'
             c.att('t','s')
             c.ele('v',''+(ix.v-1))
+          else
+            c.att('t', 'n');
+            c.ele('v', ix.v);
     if @merges.length > 0
       mc = ws.ele('mergeCells',{count:@merges.length})
       for m in @merges
